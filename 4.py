@@ -4,7 +4,7 @@ from pyspark import SparkContext, RDD, since
 from pyspark.mllib.regression import LabeledPoint
 from pyspark.mllib.util import JavaLoader, JavaSaveable
 from pyspark.mllib.tree import DecisionTreeModel, DecisionTree, RandomForestModel, RandomForest
-from pyspark.mllib.regression import LinearRegressionWithSGD, LinearRegressionModel
+from pyspark.mllib.classification import LogisticRegressionModel,LogisticRegressionWithSGD
 # $example on$
 from pyspark.mllib.util import MLUtils
 from operator import add
@@ -27,7 +27,7 @@ class BaggingClassifier():
 		self.warm_start = warm_start
 		self.sampledFeatureIndex=[[] for i in range(n_estimators)]
 
-	def __randomSelectFeature(self,line,iteration_num):#No sampling on sample
+	def __randomSelectFeature(self,line,iteration_num):#No sampling on sample, iteration_num corresponds to the right sampledFeatureIndex 
 		line_label=line.label
 		features=line.features
 		#is it neccessary?
@@ -63,24 +63,51 @@ class BaggingClassifier():
 				break
 		return result
 
+	def __ramdomSelect_predict(self,myRDD,n):
+		result=None
+		while True:
+			result=myRDD.map(lambda x:self.__randomSelectFeature(x,n)).map(lambda x:x.features)
+			if result.isEmpty():
+				continue
+			else:
+				break
+		return result	
+
 	def fit(self, data):
-		trainData = []
 		model = []
-		self.sampledFeatureIndex=[[] for i in range(self.n_estimators)]
 		sampeled_list=data.take(1)
 		total_features=len(sampeled_list[0].features)
 		#It will evaluate the sample to be picked up
 		for i in range(self.n_estimators):
 			self.sampledFeatureIndex[i]=self.__reserviorSampling(self.features_num,total_features)
-
 		for i in range(self.n_estimators):
 			cdata=self.__randomSelect(data,i)
-			model.append(LinearRegressionWithSGD.train(cdata, iterations=100, step=0.00000001))
+			model.append(LogisticRegressionWithSGD.train(cdata, iterations=10))
 		return model
+
+	def predict(self,data,models):
+		rdd_list=[]
+		count=0
+		for model in models:
+			cdata_feature=self.__ramdomSelect_predict(data,count)#cdara is the RDD selected by the feature
+			prediction_result=model.predict(cdata_feature).zipWithIndex().map(lambda x:(x[1],x[0]))
+			rdd_list.append(prediction_result)
+			print(type(prediction_result))
+			count+=1
+			pass
+		print(len(data.collect()))
+		print(len(rdd_list[0].collect()))
+		rdd_list[0].foreach(print)
+		test_join=rdd_list[0].join(rdd_list[1])
+		print(len(test_join.collect()))
+		#test_join.foreach(print)
+		return
 
 if __name__ == "__main__":
 	sc = SparkContext(appName = 'testML')
 	data = MLUtils.loadLibSVMFile(sc, 'test_original.txt')
 	baggingClass = BaggingClassifier(sample_probability=1)
-	modelC = baggingClass.fit(data,sc)
+	modelC = baggingClass.fit(data)
+	print(type(modelC[0]))
 	print(baggingClass.sampledFeatureIndex)
+	baggingClass.predict(data,modelC)
