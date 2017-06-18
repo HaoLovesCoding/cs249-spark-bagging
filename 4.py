@@ -12,7 +12,6 @@ from pyspark.mllib.linalg import SparseVector
 import random
 import copy
 class BaggingClassifier():
-
 	def __init__(self,
 				 n_estimators=3, 
 				 sample_probability=0.9, 
@@ -85,29 +84,47 @@ class BaggingClassifier():
 			model.append(LogisticRegressionWithSGD.train(cdata, iterations=10))
 		return model
 
+	#unpack nested tuple to a list
+	def __unpack(self,x):
+		result_list=[]
+		self.__unpack_helper(x,result_list)
+		return	result_list
+	
+	def __unpack_helper(self,tup,result_list):
+		if (type(tup[0]) is tuple)==False:
+			result_list.insert(0,tup[1])
+			result_list.insert(0,tup[0])
+			return
+		else:
+			result_list.insert(0,tup[1])
+			self.__unpack_helper(tup[0],result_list)
+		return
+
 	def predict(self,data,models):
 		rdd_list=[]
 		count=0
 		for model in models:
 			cdata_feature=self.__ramdomSelect_predict(data,count)#cdara is the RDD selected by the feature
-			prediction_result=model.predict(cdata_feature).zipWithIndex().map(lambda x:(x[1],x[0]))
+			prediction_result=model.predict(cdata_feature).zipWithUniqueId().map(lambda x:[x[1],x[0]])
 			rdd_list.append(prediction_result)
-			print(type(prediction_result))
 			count+=1
-			pass
-		print(len(data.collect()))
-		print(len(rdd_list[0].collect()))
-		rdd_list[0].foreach(print)
-		test_join=rdd_list[0].join(rdd_list[1])
-		print(len(test_join.collect()))
-		#test_join.foreach(print)
+
+		for i in range(len(rdd_list)-1):
+			if i==0:
+				joined_result=rdd_list[0].join(rdd_list[1]).join(rdd_list[2])
+			else:
+				joined_result=joined_result.join(rdd_list[i+1])
+		#joined_result.foreach(print)
+		joined_result=joined_result.map(lambda x:self.__unpack(x[1]))
+		#joined_result.foreach(print)
 		return
 
 if __name__ == "__main__":
 	sc = SparkContext(appName = 'testML')
 	data = MLUtils.loadLibSVMFile(sc, 'test_original.txt')
-	baggingClass = BaggingClassifier(sample_probability=1)
+	baggingClass = BaggingClassifier(n_estimators=6,sample_probability=0.9)
 	modelC = baggingClass.fit(data)
 	print(type(modelC[0]))
 	print(baggingClass.sampledFeatureIndex)
 	baggingClass.predict(data,modelC)
+	print(baggingClass.n_estimators)
