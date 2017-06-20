@@ -72,7 +72,7 @@ class BaggingClassifier():
 				break
 		return result	
 
-	def fit(self, data):
+	def fit(self, data, classifier, argument):
 		model = []
 		sampeled_list=data.take(1)
 		total_features=len(sampeled_list[0].features)
@@ -81,7 +81,8 @@ class BaggingClassifier():
 			self.sampledFeatureIndex[i]=self.__reserviorSampling(self.features_num,total_features)
 		for i in range(self.n_estimators):
 			cdata=self.__randomSelect(data,i)
-			model.append(LogisticRegressionWithSGD.train(cdata, iterations=10))
+			argument['data']=cdata# The argument should have the same type
+			model.append(classifier.train(**argument))# **argument is the named variables
 		return model
 
 	#unpack nested tuple to a list
@@ -100,9 +101,28 @@ class BaggingClassifier():
 			self.__unpack_helper(tup[0],result_list)
 		return
 
+	def __mostFrequent(self,x):
+		mydict={}
+		frequent_key=None
+		value=None
+		for i in x:
+			if i in mydict:
+				mydict[i]+=1
+			else:
+				mydict[i]=1
+		for key in mydict:
+			if frequent_key==None:
+				frequent_key=key
+				value=mydict[key]
+			else:
+				if mydict[key]>value:
+					frequent_key=key
+					value=mydict[key]
+		return frequent_key
+
 	def predict(self,data,models):
 		rdd_list=[]
-		count=0
+		count=0# count corresponds to the right sampledIndex
 		for model in models:
 			cdata_feature=self.__ramdomSelect_predict(data,count)#cdara is the RDD selected by the feature
 			prediction_result=model.predict(cdata_feature).zipWithUniqueId().map(lambda x:[x[1],x[0]])
@@ -114,17 +134,19 @@ class BaggingClassifier():
 				joined_result=rdd_list[0].join(rdd_list[1]).join(rdd_list[2])
 			else:
 				joined_result=joined_result.join(rdd_list[i+1])
+		joined_result=joined_result.map(lambda x:self.__unpack(x[1])).map(lambda x:self.__mostFrequent(x))
 		#joined_result.foreach(print)
-		joined_result=joined_result.map(lambda x:self.__unpack(x[1]))
-		#joined_result.foreach(print)
+		return joined_result
+
+	def scores(self):
 		return
 
 if __name__ == "__main__":
 	sc = SparkContext(appName = 'testML')
 	data = MLUtils.loadLibSVMFile(sc, 'test_original.txt')
 	baggingClass = BaggingClassifier(n_estimators=6,sample_probability=0.9)
-	modelC = baggingClass.fit(data)
+	myclassifier=LogisticRegressionWithSGD()
+	modelC = baggingClass.fit(data,myclassifier,{'iterations':int(10)})
 	print(type(modelC[0]))
-	print(baggingClass.sampledFeatureIndex)
+	#print(baggingClass.sampledFeatureIndex)
 	baggingClass.predict(data,modelC)
-	print(baggingClass.n_estimators)
