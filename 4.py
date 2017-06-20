@@ -2,6 +2,7 @@ from __future__ import print_function
 from abc import ABCMeta, abstractmethod
 from pyspark import SparkContext, RDD, since
 from pyspark.mllib.regression import LabeledPoint
+from pyspark.mllib.evaluation import MulticlassMetrics
 from pyspark.mllib.util import JavaLoader, JavaSaveable
 from pyspark.mllib.tree import DecisionTreeModel, DecisionTree, RandomForestModel, RandomForest
 from pyspark.mllib.classification import LogisticRegressionModel,LogisticRegressionWithSGD
@@ -22,9 +23,12 @@ class BaggingClassifier():
 		self.n_estimators = n_estimators
 		self.sample_probability = sample_probability
 		self.features_num = features_num
-		self.oob_score = oob_score
-		self.warm_start = warm_start
+		#self.oob_score = oob_score
+		#self.warm_start = warm_start
 		self.sampledFeatureIndex=[[] for i in range(n_estimators)]
+		self.precision=None
+		self.recall=None
+		self.F1score=None
 
 	def __randomSelectFeature(self,line,iteration_num):#No sampling on sample, iteration_num corresponds to the right sampledFeatureIndex 
 		line_label=line.label
@@ -135,18 +139,24 @@ class BaggingClassifier():
 			else:
 				joined_result=joined_result.join(rdd_list[i+1])
 		joined_result=joined_result.map(lambda x:self.__unpack(x[1])).map(lambda x:self.__mostFrequent(x))
-		#joined_result.foreach(print)
+		predictionAndLabels=joined_result.zipWithUniqueId().\
+							map(lambda x: (x[1],float(x[0])) ).\
+							join( data.map(lambda x:float(x.label)).\
+							zipWithUniqueId().map( lambda x: (x[1],x[0])) ).\
+							map(lambda x: x[1])
+		#predictionAndLabels.foreach(print)
+		metrics = MulticlassMetrics(predictionAndLabels)
+		self.precision=metrics.precision()
+		self.recall=metrics.recall()
+		self.F1score=metrics.fMeasure()
 		return joined_result
-
-	def scores(self):
-		return
 
 if __name__ == "__main__":
 	sc = SparkContext(appName = 'testML')
 	data = MLUtils.loadLibSVMFile(sc, 'test_original.txt')
 	baggingClass = BaggingClassifier(n_estimators=6,sample_probability=0.9)
 	myclassifier=LogisticRegressionWithSGD()
-	modelC = baggingClass.fit(data,myclassifier,{'iterations':int(10)})
-	print(type(modelC[0]))
+	modelC = baggingClass.fit(data,myclassifier,{'iterations':int(1)})
 	#print(baggingClass.sampledFeatureIndex)
 	baggingClass.predict(data,modelC)
+	mylist=[]
