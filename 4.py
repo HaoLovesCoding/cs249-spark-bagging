@@ -135,7 +135,7 @@ class BaggingClassifier():
 
 		for i in range(len(rdd_list)-1):
 			if i==0:
-				joined_result=rdd_list[0].join(rdd_list[1]).join(rdd_list[2])
+				joined_result=rdd_list[0].join(rdd_list[1])
 			else:
 				joined_result=joined_result.join(rdd_list[i+1])
 		joined_result=joined_result.map(lambda x:self.__unpack(x[1])).map(lambda x:self.__mostFrequent(x))
