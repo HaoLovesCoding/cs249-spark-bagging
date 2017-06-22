@@ -1,12 +1,7 @@
 from __future__ import print_function
-from abc import ABCMeta, abstractmethod
 from pyspark import SparkContext, RDD, since
 from pyspark.mllib.regression import LabeledPoint
-from pyspark.mllib.evaluation import MulticlassMetrics
-from pyspark.mllib.util import JavaLoader, JavaSaveable
-# $example on$
 from pyspark.mllib.util import MLUtils
-from operator import add
 from pyspark.mllib.linalg import SparseVector
 import random
 import copy
