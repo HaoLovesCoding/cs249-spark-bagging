@@ -26,6 +26,7 @@ class  BaggingRegressor(object):
 		#self.oob_score = oob_score
 		#self.warm_start = warm_start
 		self.sampledFeatureIndex=[[] for i in range(n_estimators)]
+		self.MSE=None
 
 	def __randomSelectFeature(self,line,iteration_num):#No sampling on sample, iteration_num corresponds to the right sampledFeatureIndex 
 		line_label=line.label
@@ -126,10 +127,9 @@ class  BaggingRegressor(object):
 				joined_result=joined_result.zip(rdd_list[i+1])
 		joined_result=joined_result.map(lambda x:self.__unpack(x)).map(lambda x:self.__average(x))
 		labelsAndPredictions = data.map(lambda lp: lp.label).zip(joined_result)
-		testMSE=labelsAndPredictions.map(lambda lp: (lp[0] - lp[1])*(lp[0]-lp[1])).sum()/float(data.count())
-		print('Test Mean Squared Error = ' + str(testMSE))
-
-
+		self.MSE=labelsAndPredictions.map(lambda lp: (lp[0] - lp[1])*(lp[0]-lp[1])).sum()/float(data.count())
+		print('Mean Squared Error = ' + str(self.MSE))
+		return joined_result
 
 if __name__=="__main__":
 	sc = SparkContext(appName = 'testML')
