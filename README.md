@@ -85,4 +85,4 @@
 *return value* - Return a RDD of LabeledPoints for the following MLLib
 
 ## Examples
-** check ClassifierExample.py, RegressorExample.py, csvLoader_example.py for the referrence ** 
+**check ClassifierExample.py, RegressorExample.py, csvLoader_example.py for the referrence** 
