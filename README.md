@@ -1,6 +1,9 @@
 #cs249-spark-bagging
+
 ##This project icnludes three API classes we made for Apache-Spark MLlib
+
 ##class BaggingClassifer
+
 **Parameters:**
 *n_estimators* - The number of estimators in the bagging ensemble
 *sample_probability* - The probability of a data point being sampled
@@ -11,7 +14,9 @@
 
 **Methods:**
 ###1 *def __init__(self,n_estimators=3,sample_probability=0.9,features_num=100)*
+
 ###2 *def fit(self, data, classifier, argument)*
+
   *data* - The RDD of LabeledPoint, training dataset
   *classifier* - The single classifer making up the ensemble. Example: decision tree is the single classifier for random forest.
   *argument* - Dictionary format. The argument passed to the classifier.train() or classifier.trainClassifier(). 
