@@ -1,5 +1,5 @@
-##This project icnludes three API classes we made for Apache-Spark MLlib
-###class BaggingClassifer
+#This project icnludes three API classes we made for Apache-Spark MLlib
+##class BaggingClassifer
 **Parameters:**
 *n_estimators* - The number of estimators in the bagging ensemble
 *sample_probability* - The probability of a data point being sampled
