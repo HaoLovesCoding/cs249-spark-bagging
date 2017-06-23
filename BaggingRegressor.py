@@ -10,9 +10,7 @@ class  BaggingRegressor(object):
 	def __init__(self,
 				 n_estimators=3, 
 				 sample_probability=0.9, 
-				 features_num=100, 
-				 oob_score=False, 
-				 warm_start=False):
+				 features_num=100):
 
 		self.n_estimators = n_estimators
 		self.sample_probability = sample_probability
@@ -66,7 +64,7 @@ class  BaggingRegressor(object):
 				break
 		return result	
 
-	def fit(self, data, classifier, argument):
+	def fit(self, data, regressor, argument):
 		model = []
 		sampeled_list=data.take(1)
 		total_features=len(sampeled_list[0].features)
@@ -77,9 +75,9 @@ class  BaggingRegressor(object):
 			cdata=self.__randomSelect(data,i)
 			argument['data']=cdata# The argument should have the same type
 			try:
-				model.append(classifier.trainRegressor(**argument))# **argument is the named variables
+				model.append(regressor.trainRegressor(**argument))# **argument is the named variables
 			except AttributeError:
-				model.append(classifier.train(**argument))# 
+				model.append(regressor.train(**argument))# 
 		return model
 
 	#unpack nested tuple to a list

@@ -12,9 +12,7 @@ class BaggingClassifier():
 	def __init__(self,
 				 n_estimators=3, 
 				 sample_probability=0.9, 
-				 features_num=100, 
-				 oob_score=False, 
-				 warm_start=False):
+				 features_num=100):
 
 		self.n_estimators = n_estimators
 		self.sample_probability = sample_probability
