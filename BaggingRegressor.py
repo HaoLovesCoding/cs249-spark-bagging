@@ -5,7 +5,6 @@ from pyspark.mllib.util import MLUtils
 from pyspark.mllib.linalg import SparseVector
 import random
 import copy
-from pyspark.mllib.tree import GradientBoostedTrees, GradientBoostedTreesModel
 
 class  BaggingRegressor(object):
 	def __init__(self,
@@ -18,8 +17,6 @@ class  BaggingRegressor(object):
 		self.n_estimators = n_estimators
 		self.sample_probability = sample_probability
 		self.features_num = features_num
-		#self.oob_score = oob_score
-		#self.warm_start = warm_start
 		self.sampledFeatureIndex=[[] for i in range(n_estimators)]
 		self.MSE=None
 
@@ -79,7 +76,10 @@ class  BaggingRegressor(object):
 		for i in range(self.n_estimators):
 			cdata=self.__randomSelect(data,i)
 			argument['data']=cdata# The argument should have the same type
-			model.append(classifier.trainRegressor(**argument))# **argument is the named variables
+			try:
+				model.append(classifier.trainRegressor(**argument))# **argument is the named variables
+			except AttributeError:
+				model.append(classifier.train(**argument))# 
 		return model
 
 	#unpack nested tuple to a list
@@ -89,6 +89,9 @@ class  BaggingRegressor(object):
 		return	result_list
 	
 	def __unpack_helper(self,tup,result_list):
+		if (type(tup) is tuple)==False:
+			result_list.insert(0,tup)
+			return
 		if (type(tup[0]) is tuple)==False:
 			result_list.insert(0,tup[1])
 			result_list.insert(0,tup[0])
@@ -120,18 +123,18 @@ class  BaggingRegressor(object):
 				joined_result=rdd_list[0].zip(rdd_list[1])
 			else:
 				joined_result=joined_result.zip(rdd_list[i+1])
+		if (len(rdd_list)-1)==0:
+			joined_result=rdd_list[0]
 		joined_result=joined_result.map(lambda x:self.__unpack(x)).map(lambda x:self.__average(x))
 		labelsAndPredictions = data.map(lambda lp: lp.label).zip(joined_result)
 		self.MSE=labelsAndPredictions.map(lambda lp: (lp[0] - lp[1])*(lp[0]-lp[1])).sum()/float(data.count())
-		print('Mean Squared Error = ' + str(self.MSE))
 		return joined_result
 
 if __name__=="__main__":
+	from pyspark.mllib.tree import GradientBoostedTrees, GradientBoostedTreesModel
 	sc = SparkContext(appName = 'testML')
 	data = MLUtils.loadLibSVMFile(sc, 'regression_linear.txt')
 	myBagging=BaggingRegressor(n_estimators=10,sample_probability=0.8)
 	singleRegressor=GradientBoostedTrees()
 	models=myBagging.fit(data,singleRegressor,{"categoricalFeaturesInfo":{}, "numIterations":3})
 	myBagging.predict(data,models)
-
-
