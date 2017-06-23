@@ -17,9 +17,9 @@
 
 **Methods:**
 
-### 1 *def __init__(self,n_estimators=3,sample_probability=0.9,features_num=100)*
+#### 1 *def __init__(self,n_estimators=3,sample_probability=0.9,features_num=100)*
 
-### 2 *def fit(self, data, classifier, argument)*
+#### 2 *def fit(self, data, classifier, argument)*
 
   *data* - The RDD of LabeledPoint, training dataset
 
@@ -31,7 +31,7 @@
   trainClassifier(trainingData, numClasses=2, categoricalFeaturesInfo={}, impurity='gini', maxDepth=5)
 
   *This method will return the trained models ensemble*
-### 3.*def predict(self,data,models)*
+#### 3.*def predict(self,data,models)*
 
   *data* - The RDD of LabeledPoint, test dataset
 
@@ -50,9 +50,9 @@
 
 **Methods:**
 
-### 1 *def __init__(self,n_estimators=3,sample_probability=0.9,features_num=100)*
+#### 1 *def __init__(self,n_estimators=3,sample_probability=0.9,features_num=100)*
 
-### 2 *def fit(self, data, classifier, argument)*
+#### 2 *def fit(self, data, classifier, argument)*
 
   *data* - The RDD of LabeledPoint, training dataset
 
@@ -64,7 +64,7 @@
   trainClassifier(trainingData, numClasses=2, categoricalFeaturesInfo={}, impurity='gini', maxDepth=5)
 
   *This method will return the trained models ensemble*
-### 3.*def predict(self,data,models)*
+#### 3.*def predict(self,data,models)*
 
   *data* - The RDD of LabeledPoint, test dataset
 
