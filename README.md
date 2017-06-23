@@ -69,3 +69,17 @@
   *data* - The RDD of LabeledPoint, test dataset
 
   *models* - The trained model ensembles returned by fit() method
+
+## class csvLoader
+
+**Methods:**
+#### def loadCSVwithHeader(self,sc,path,label='',featureToSkip=[])
+	*sc* - The SparkContext
+
+	*path* - The path to the csv file
+
+	*label* - The target column's name. Example: if you would like to estimate 'retweet' in your MLlib app, label='retweet'
+
+	*featureToSkip* - A list of strings, indicating the features to be skipped.
+	
+	*return value* - Return a RDD of LabeledPoints for the following MLLib 
